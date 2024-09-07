@@ -20,6 +20,8 @@ func (app *application) Home(w http.ResponseWriter, r *http.Request) {
 		Message: "Yayy",
 		Result:  "1",
 	}
+	// app.DB.GetAll()
+	app.writeJSON(w, http.StatusOK, payload)
 	out, err := json.Marshal(payload)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
