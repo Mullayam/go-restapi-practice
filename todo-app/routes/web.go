@@ -1,16 +1,16 @@
 package routes
 
 import (
+	"github.com/Mullayam/todo-app/config"
 	"github.com/Mullayam/todo-app/controllers"
 	"github.com/gofiber/fiber/v2"
 )
 
-func InitRoutes(app *fiber.App) {
+// InitRoutes sets up all application routes
+func InitRoutes(app *fiber.App, db *config.Repository) {
 	api := app.Group("/api")
-	api.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("Hello, World!")
-	})
-	api.Get("/todos", controllers.GetTodos)
-	api.Post("/todos", controllers.CreateTodo)
-	api.Patch("/todos/:id", controllers.UpdateTodo)
+	todoController := controllers.NewTodoController(db.DB)
+	api.Get("/todos", todoController.GetTodos)
+	api.Post("/todos", todoController.CreateTodo)
+	api.Patch("/todos/:id", todoController.UpdateTodo)
 }

@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"net/http"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -32,7 +34,7 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-func (j *Auth) GenerateTokenPair(user JwtUser) (TokenPairs, error) {
+func (j *Auth) GenerateTokenPair(user *JwtUser) (TokenPairs, error) {
 	// create a token
 	token := jwt.New(jwt.SigningMethodHS256)
 
@@ -72,4 +74,40 @@ func (j *Auth) GenerateTokenPair(user JwtUser) (TokenPairs, error) {
 	// Create TokenPairs and populate with signed tokens
 	return TokenPairs{Token: signedAccessToken, RefreshToken: signedRefreshToken}, nil
 
+}
+func (j *Auth) GetTokenFromHeaderAndVerify(w http.ResponseWriter, r *http.Request) (string, *Claims, error) {
+	w.Header().Set("Vary", "Authorization")
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		return "", nil, fmt.Errorf("no authorization header provided")
+	}
+
+	headerParts := strings.Split(authHeader, " ")
+	if len(headerParts) != 2 {
+		return "", nil, fmt.Errorf("invalid authorization header format")
+	}
+	if headerParts[0] != "Bearer" {
+		return "", nil, fmt.Errorf("invalid authorization header format")
+
+	}
+	token := headerParts[1]
+
+	claims := &Claims{}
+
+	_, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+
+		}
+		return []byte(j.Secret), nil
+	})
+
+	if err != nil {
+		return "", nil, err
+	}
+	if claims.Issuer != j.Issuer {
+		return "", nil, fmt.Errorf("invalid issuer")
+
+	}
+	return token, claims, nil
 }

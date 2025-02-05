@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	"github.com/Mullayam/todo-app/config"
 	"github.com/Mullayam/todo-app/routes"
 	"github.com/gofiber/fiber/v2"
@@ -8,14 +10,33 @@ import (
 )
 
 func main() {
+
 	err := godotenv.Load()
 	if err != nil {
-		panic(err)
+		log.Fatalf("Error loading .env file: %v", err)
 	}
-	config.NewConnection()
 
+	// Initialize DB connection
+	db := config.NewConnection()
+	if db == nil {
+		log.Fatalf("Failed to connect to the database")
+	}
+	defer db.Close()
+
+	// Create repository instance
+	repo := &config.Repository{
+		DB: db,
+	}
+
+	// Create Fiber app
 	app := fiber.New()
-	routes.InitRoutes(app)
 
-	app.Listen(":3000")
+	// Initialize routes
+	routes.InitRoutes(app, repo)
+
+	// Start the server
+	log.Println("Server is running on http://localhost:3000")
+	if err := app.Listen(":3000"); err != nil {
+		log.Fatalf("Error starting server: %v", err)
+	}
 }

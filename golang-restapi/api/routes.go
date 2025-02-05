@@ -12,5 +12,9 @@ func (app *application) routes() http.Handler {
 	mux.Use(app.enableCors)
 	mux.Get("/", app.Hello)
 	mux.Get("/test", app.Home)
+	mux.
+		Route("/api", func(r chi.Router) {
+			mux.Use(app.isAuthenticated)
+		})
 	return mux
 }
