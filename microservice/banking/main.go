@@ -1,9 +1,7 @@
 package main
 
-import (
-	"github.com/banking/handlers/handlers"
-)
+import ()
 
 func main() {
-	handlers.Start()
+
 }

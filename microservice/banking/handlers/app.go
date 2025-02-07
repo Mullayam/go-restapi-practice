@@ -9,10 +9,10 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func Start() {
+func StartServer() {
 
 	router := mux.NewRouter()
-	ch := CustomerHandler{service.NewCustomerService(domain.NewCustomerRepositoryStub())}
+	ch := &CustomerHandler{service.NewCustomerService(domain.NewCustomerRepositoryStub())}
 
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Hello World"))

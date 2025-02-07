@@ -1,0 +1,11 @@
+syntax = "proto3";
+package dummy;
+
+option go_package = "github.com/mullayam/greet/proto";
+message Dummy {
+    string name = 1;
+    int32 age = 2;
+}
+service DummyService {
+    rpc GetDummy(Dummy) returns (Dummy);
+}
