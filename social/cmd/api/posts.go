@@ -69,18 +69,12 @@ func (app *application) updatePostHandler(w http.ResponseWriter, r *http.Request
 	}
 }
 func (app *application) deletePostHandler(w http.ResponseWriter, r *http.Request) {
-	var post *store.Post
-	if err := readJSON(w, r, post); err != nil {
-		writeJSONError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	userId := 1
-	post = &store.Post{Title: post.Title, Content: post.Content, UserID: int64(userId)}
-	if err := app.store.Posts.Create(r.Context(), post); err != nil {
+
+	if err := app.store.Posts.Delete(r.Context(), 1); err != nil {
 		writeJSONError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	if err := writeJSON(w, http.StatusCreated, post); err != nil {
+	if err := writeJSON(w, http.StatusAccepted, {}); err != nil {
 		writeJSONError(w, http.StatusInternalServerError, err.Error())
 		return
 	}

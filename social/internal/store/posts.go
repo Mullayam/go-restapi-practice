@@ -4,6 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"net/http"
+
+	"github.com/mullayam/social/internal/store"
 )
 
 type Post struct {
@@ -18,6 +21,11 @@ type Post struct {
 type PostStore struct {
 	db *sql.DB
 }
+type postKey string
+
+const (
+	PostsTable postKey = "posts"
+)
 
 func (s *PostStore) Create(ctx context.Context, post *Post) error {
 	rawSql := `insert into posts (content, title, user_id, tags) values ($1, $2, $3, $4) returning id, created_at, updated_at`
@@ -53,9 +61,25 @@ func (s *PostStore) Update(ctx context.Context, post *Post) error {
 func (s *PostStore) Delete(ctx context.Context, id int64) error {
 
 	rawSql := `DELETE * FROM posts WHERE id = $1`
-	err := s.db.QueryRowContext(ctx, rawSql, int64(id)).Err()
+	res, err := s.db.ExecContext(ctx, rawSql, int64(id))
 	if err != nil {
 		return err
 	}
+	rows, err = res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return errors.New("post not found")
+	}
 	return nil
+}
+func (s *PostStore) postContextMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), PostsTable, s)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+func getPostFromCtx(r *http.Request) *store.Post {
+	return r.Context().Value(PostsTable).(*store.Post)
 }

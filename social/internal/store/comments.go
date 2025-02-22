@@ -20,6 +20,22 @@ type CommentStore struct {
 func NewCommentStore(db *sql.DB) CommentStore {
 	return CommentStore{db}
 }
-func (s *CommentStore) Create(ctx context.Context, comment *Comment) error {
+func (s *CommentStore) GetByPostID(ctx context.Context, comment *Comment) ([]*Comment, error) {
+	query := `SELECT id, created_at, updated_at FROM comments WHERE post_id = $1`
+	rows, err := s.db.QueryContext(ctx, query, comment.PostID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	comments := make([]*Comment, 0)
+	for rows.Next() {
+		var c Comment
+		err := rows.Scan(&comment.ID, &comment.CreatedAt, &comment.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		comments = append(comments, &c)
+	}
+	return comments, nil
 
 }
